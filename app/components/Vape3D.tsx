@@ -168,20 +168,23 @@ const Vape3D = () => {
       smokeParticles.push(smoke);
       scene.add(smoke);
     };
-
     const animateSmoke = () => {
       smokeParticles.forEach((particle, index) => {
         particle.position.y += 0.05;
         particle.position.x += (Math.random() - 0.5) * 0.05;
         particle.position.z += (Math.random() - 0.5) * 0.05;
-        particle.material.opacity -= 0.002;
-        if (particle.material.opacity <= 0) {
+    
+        // TypeScript casting to PointsMaterial to access opacity
+        const smokeMaterial = particle.material as THREE.PointsMaterial;
+    
+        smokeMaterial.opacity -= 0.002;
+        if (smokeMaterial.opacity <= 0) {
           scene.remove(particle);
           smokeParticles.splice(index, 1);
         }
       });
     };
-
+    
     const startGeneratingSmoke = () => {
       isButtonPressedRef.current = true;
       smokeIntervalRef.current = setInterval(() => {
