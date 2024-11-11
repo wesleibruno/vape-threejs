@@ -11,6 +11,11 @@ const Vape3D = () => {
   const vapeSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // Só inicializa o código relacionado ao áudio no cliente
+    if (typeof window !== 'undefined') {
+      vapeSoundRef.current = new Audio('vape-sound.mp3');
+    }
+
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ alpha: true });
@@ -198,27 +203,28 @@ const Vape3D = () => {
     };
 
     const startGeneratingSmoke = () => {
-      if (smokeIntervalRef.current) {
-        clearInterval(smokeIntervalRef.current);
+      if (!smokeIntervalRef.current) {
+        smokeIntervalRef.current = setInterval(generateSmokeParticle, 500);
       }
-      smokeIntervalRef.current = setInterval(generateSmokeParticle, 150);
     };
 
     const stopGeneratingSmoke = () => {
       if (smokeIntervalRef.current) {
         clearInterval(smokeIntervalRef.current);
+        smokeIntervalRef.current = null;
       }
     };
 
     const playVapeSound = () => {
-      if (!vapeSoundRef.current) {
-        vapeSoundRef.current = new Audio('vape-sound.mp3');
+      if (vapeSoundRef.current) {
+        vapeSoundRef.current.loop = true;
+        vapeSoundRef.current.play();
       }
-      vapeSoundRef.current.play();
     };
 
     const stopVapeSound = () => {
       if (vapeSoundRef.current) {
+        vapeSoundRef.current.loop = false;
         vapeSoundRef.current.pause();
         vapeSoundRef.current.currentTime = 0;
       }
@@ -237,7 +243,7 @@ const Vape3D = () => {
     };
   }, []);
 
-  return <div id="vape-container" className="bg-black" style={{ width: '100%', height: '100vh' }} />;
+  return <div id="vape-container" className="bg-gray-800" style={{ width: '100%', height: '100vh' }} />;
 };
 
 export default Vape3D;
