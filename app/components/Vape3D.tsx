@@ -8,19 +8,33 @@ const Vape3D = () => {
   const [smokeParticles, setSmokeParticles] = useState<THREE.Points[]>([]);
   const smokeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isButtonPressedRef = useRef(false);
+  const vapeSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // Só inicializa o código relacionado ao áudio no cliente
+    if (typeof window !== 'undefined') {
+      vapeSoundRef.current = new Audio('vape-sound.mp3');
+    }
+
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
 
-    const light = new THREE.AmbientLight(0x404040);
+    // Crie um container para o renderer (canvas)
+    const container = document.getElementById('vape-container');
+    if (container) {
+      container.appendChild(renderer.domElement); // Adiciona o canvas ao container
+    }
+
+    const light = new THREE.AmbientLight(0x404040); // Luz suave
     scene.add(light);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(5, 5, 5);
     scene.add(directionalLight);
+
+    // Posição inicial da câmera
+    camera.position.z = 10;
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -28,7 +42,7 @@ const Vape3D = () => {
       renderer.render(scene, camera);
     };
 
-    // Modelo vape
+    // Modelo vape (mesmo do código anterior)
     const baseHeight = 5;
     const baseGeometry = new THREE.CylinderGeometry(1.2, 1.2, baseHeight, 32);
     const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
@@ -115,6 +129,7 @@ const Vape3D = () => {
       if (intersects.length > 0) {
         buttonMesh.scale.set(0.9, 0.9, 0.9);
         startGeneratingSmoke();
+        playVapeSound();
       }
     };
 
@@ -137,6 +152,7 @@ const Vape3D = () => {
       isDragging = false;
       buttonMesh.scale.set(1, 1, 1);
       stopGeneratingSmoke();
+      stopVapeSound();
     };
 
     const generateSmokeParticle = () => {
@@ -168,39 +184,49 @@ const Vape3D = () => {
       smokeParticles.push(smoke);
       scene.add(smoke);
     };
-const animateSmoke = () => {
-  smokeParticles.forEach((particle, index) => {
-    particle.position.y += 0.05;
-    particle.position.x += (Math.random() - 0.5) * 0.05;
-    particle.position.z += (Math.random() - 0.5) * 0.05;
 
-    // TypeScript casting to PointsMaterial to access opacity
-    const smokeMaterial = particle.material as THREE.PointsMaterial;
+    const animateSmoke = () => {
+      smokeParticles.forEach((particle, index) => {
+        particle.position.y += 0.05;
+        particle.position.x += (Math.random() - 0.5) * 0.05;
+        particle.position.z += (Math.random() - 0.5) * 0.05;
 
-    smokeMaterial.opacity -= 0.002;
-    if (smokeMaterial.opacity <= 0) {
-      scene.remove(particle);
-      smokeParticles.splice(index, 1);
-    }
-  });
-};
+        // TypeScript casting to PointsMaterial to access opacity
+        const smokeMaterial = particle.material as THREE.PointsMaterial;
+        smokeMaterial.opacity = Math.max(0, smokeMaterial.opacity - 0.01);
+
+        if (smokeMaterial.opacity <= 0) {
+          scene.remove(particle);
+          smokeParticles.splice(index, 1);
+        }
+      });
+    };
 
     const startGeneratingSmoke = () => {
-      isButtonPressedRef.current = true;
-      smokeIntervalRef.current = setInterval(() => {
-        if (isButtonPressedRef.current) {
-          for (let i = 0; i < 40; i++) {
-            generateSmokeParticle();
-          }
-        }
-      }, 30);
+      if (!smokeIntervalRef.current) {
+        smokeIntervalRef.current = setInterval(generateSmokeParticle, 500);
+      }
     };
 
     const stopGeneratingSmoke = () => {
-      isButtonPressedRef.current = false;
       if (smokeIntervalRef.current) {
         clearInterval(smokeIntervalRef.current);
         smokeIntervalRef.current = null;
+      }
+    };
+
+    const playVapeSound = () => {
+      if (vapeSoundRef.current) {
+        vapeSoundRef.current.loop = true;
+        vapeSoundRef.current.play();
+      }
+    };
+
+    const stopVapeSound = () => {
+      if (vapeSoundRef.current) {
+        vapeSoundRef.current.loop = false;
+        vapeSoundRef.current.pause();
+        vapeSoundRef.current.currentTime = 0;
       }
     };
 
@@ -208,26 +234,16 @@ const animateSmoke = () => {
     window.addEventListener('mousemove', onMoveInteraction);
     window.addEventListener('mouseup', onEndInteraction);
 
-    window.addEventListener('touchstart', onStartInteraction);
-    window.addEventListener('touchmove', onMoveInteraction);
-    window.addEventListener('touchend', onEndInteraction);
-
-    camera.position.z = 7;
-
     animate();
 
     return () => {
       window.removeEventListener('mousedown', onStartInteraction);
       window.removeEventListener('mousemove', onMoveInteraction);
       window.removeEventListener('mouseup', onEndInteraction);
-
-      window.removeEventListener('touchstart', onStartInteraction);
-      window.removeEventListener('touchmove', onMoveInteraction);
-      window.removeEventListener('touchend', onEndInteraction);
     };
   }, []);
 
-  return <></>;
+  return <div id="vape-container" className="bg-gray-800" style={{ width: '100%', height: '100vh' }} />;
 };
 
 export default Vape3D;
