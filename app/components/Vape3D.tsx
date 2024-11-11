@@ -9,6 +9,9 @@ const Vape3D = () => {
   const smokeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isButtonPressedRef = useRef(false);
 
+  // Adicionando o áudio do vape
+  const vapeSound = new Audio('/audio/vape-sound.mp3');
+
   useEffect(() => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -115,6 +118,7 @@ const Vape3D = () => {
       if (intersects.length > 0) {
         buttonMesh.scale.set(0.9, 0.9, 0.9);
         startGeneratingSmoke();
+        vapeSound.play(); // Reproduz o áudio quando o botão é clicado
       }
     };
 
@@ -207,27 +211,24 @@ const Vape3D = () => {
     window.addEventListener('mousedown', onStartInteraction);
     window.addEventListener('mousemove', onMoveInteraction);
     window.addEventListener('mouseup', onEndInteraction);
-
     window.addEventListener('touchstart', onStartInteraction);
     window.addEventListener('touchmove', onMoveInteraction);
     window.addEventListener('touchend', onEndInteraction);
 
-    camera.position.z = 7;
-
+    camera.position.z = 10;
     animate();
 
     return () => {
       window.removeEventListener('mousedown', onStartInteraction);
       window.removeEventListener('mousemove', onMoveInteraction);
       window.removeEventListener('mouseup', onEndInteraction);
-
       window.removeEventListener('touchstart', onStartInteraction);
       window.removeEventListener('touchmove', onMoveInteraction);
       window.removeEventListener('touchend', onEndInteraction);
     };
   }, []);
 
-  return <></>;
+  return null;
 };
 
 export default Vape3D;
