@@ -235,7 +235,7 @@ const Vape3D = () => {
     window.addEventListener('touchmove', onMoveInteraction);
     window.addEventListener('touchend', onEndInteraction);
 
-    camera.position.z = 10;
+    camera.position.z = 8;
     animate();
 
     return () => {
