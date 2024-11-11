@@ -8,14 +8,8 @@ const Vape3D = () => {
   const [smokeParticles, setSmokeParticles] = useState<THREE.Points[]>([]);
   const smokeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isButtonPressedRef = useRef(false);
-  const vapeSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Só inicializa o código relacionado ao áudio no cliente
-    if (typeof window !== 'undefined') {
-      vapeSoundRef.current = new Audio('vape-sound.mp3');
-    }
-
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ alpha: true });
@@ -121,7 +115,6 @@ const Vape3D = () => {
       if (intersects.length > 0) {
         buttonMesh.scale.set(0.9, 0.9, 0.9);
         startGeneratingSmoke();
-        playVapeSound();
       }
     };
 
@@ -144,15 +137,13 @@ const Vape3D = () => {
       isDragging = false;
       buttonMesh.scale.set(1, 1, 1);
       stopGeneratingSmoke();
-      stopVapeSound();
     };
 
     const generateSmokeParticle = () => {
       // Gerando partículas de fumaça em torno do bocal
       const smokeGeometry = new THREE.BufferGeometry();
       const vertices = [];
-      const numParticles = 100; // Quantidade de partículas
-      for (let i = 0; i < numParticles; i++) {
+      for (let i = 0; i < 100; i++) {
         const spreadX = (Math.random() - 0.5) * 2;
         const spreadY = (Math.random() - 0.5) * 1;
         const spreadZ = (Math.random() - 0.5) * 1;
@@ -177,23 +168,22 @@ const Vape3D = () => {
       smokeParticles.push(smoke);
       scene.add(smoke);
     };
+const animateSmoke = () => {
+  smokeParticles.forEach((particle, index) => {
+    particle.position.y += 0.05;
+    particle.position.x += (Math.random() - 0.5) * 0.05;
+    particle.position.z += (Math.random() - 0.5) * 0.05;
 
-    const animateSmoke = () => {
-      smokeParticles.forEach((particle, index) => {
-        particle.position.y += 0.05;
-        particle.position.x += (Math.random() - 0.5) * 0.05;
-        particle.position.z += (Math.random() - 0.5) * 0.05;
+    // TypeScript casting to PointsMaterial to access opacity
+    const smokeMaterial = particle.material as THREE.PointsMaterial;
 
-        // TypeScript casting to PointsMaterial to access opacity
-        const smokeMaterial = particle.material as THREE.PointsMaterial;
-        smokeMaterial.opacity = Math.max(0, smokeMaterial.opacity - 0.01);
-
-        if (smokeMaterial.opacity <= 0) {
-          scene.remove(particle);
-          smokeParticles.splice(index, 1);
-        }
-      });
-    };
+    smokeMaterial.opacity -= 0.002;
+    if (smokeMaterial.opacity <= 0) {
+      scene.remove(particle);
+      smokeParticles.splice(index, 1);
+    }
+  });
+};
 
     const startGeneratingSmoke = () => {
       isButtonPressedRef.current = true;
@@ -214,46 +204,30 @@ const Vape3D = () => {
       }
     };
 
-    const playVapeSound = () => {
-      if (vapeSoundRef.current) {
-        vapeSoundRef.current.loop = true;
-        vapeSoundRef.current.play();
-      }
-    };
-
-    const stopVapeSound = () => {
-      if (vapeSoundRef.current) {
-        vapeSoundRef.current.loop = false;
-        vapeSoundRef.current.pause();
-      }
-    };
-
     window.addEventListener('mousedown', onStartInteraction);
     window.addEventListener('mousemove', onMoveInteraction);
     window.addEventListener('mouseup', onEndInteraction);
+
     window.addEventListener('touchstart', onStartInteraction);
     window.addEventListener('touchmove', onMoveInteraction);
     window.addEventListener('touchend', onEndInteraction);
 
-    camera.position.z = 10;
+    camera.position.z = 7;
+
     animate();
 
     return () => {
       window.removeEventListener('mousedown', onStartInteraction);
       window.removeEventListener('mousemove', onMoveInteraction);
       window.removeEventListener('mouseup', onEndInteraction);
+
       window.removeEventListener('touchstart', onStartInteraction);
       window.removeEventListener('touchmove', onMoveInteraction);
       window.removeEventListener('touchend', onEndInteraction);
     };
   }, []);
 
-  return (
-    <div
-      className="w-full h-full bg-black"
-      style={{ cursor: 'grab' }}
-    />
-  );
+  return <></>;
 };
 
 export default Vape3D;
